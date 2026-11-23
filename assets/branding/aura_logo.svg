@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="auraGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C2FF" />
+      <stop offset="50%" stop-color="#0085FF" />
+      <stop offset="100%" stop-color="#5856D6" />
+    </linearGradient>
+  </defs>
+  <!-- Center Body -->
+  <rect x="46" y="27" width="8" height="45" rx="4" fill="url(#auraGradient)" />
+  <!-- Left Upper Wing -->
+  <path d="M46 35 C32 10, 12 8, 6 22 C2 35, 18 52, 46 48 Z" fill="url(#auraGradient)" />
+  <!-- Right Upper Wing -->
+  <path d="M54 35 C68 10, 88 8, 94 22 C98 35, 82 52, 54 48 Z" fill="url(#auraGradient)" />
+  <!-- Left Lower Wing -->
+  <path d="M46 52 C20 56, 10 72, 22 86 C32 94, 44 78, 47 65 Z" fill="url(#auraGradient)" />
+  <!-- Right Lower Wing -->
+  <path d="M54 52 C80 56, 90 72, 78 86 C68 94, 56 78, 53 65 Z" fill="url(#auraGradient)" />
+</svg>
