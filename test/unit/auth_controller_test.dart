@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:bluesky_app/features/authentication/controllers/auth_controller.dart';
 import 'package:bluesky_app/data/repositories/auth_repository.dart';
-import 'package:bluesky_app/features/authentication/services/auth_service.dart';
+import 'package:bluesky_app/core/auth/secure_token_storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -12,7 +12,8 @@ void main() {
 
     setUp(() {
       Get.reset();
-      Get.put<AuthRepository>(AuthRepository(authService: AuthService()));
+      Get.put<SecureTokenStorage>(SecureTokenStorage());
+      Get.put<AuthRepository>(AuthRepository());
       authController = Get.put<AuthController>(AuthController());
     });
 
@@ -20,11 +21,9 @@ void main() {
       Get.reset();
     });
 
-    test('initial state has empty controllers and false loading', () {
+    test('initial state has false loading and unauthenticated status', () {
       expect(authController.isLoading.value, false);
-      expect(authController.isCheckingHandle.value, false);
-      expect(authController.loginEmailController.text, '');
-      expect(authController.loginPasswordController.text, '');
+      expect(authController.isAuthenticated.value, false);
     });
 
     test('validates handle minimum length immediately', () {

@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class UserModel {
   final String id;
   final String email;
@@ -21,7 +19,7 @@ class UserModel {
   final bool isMuted;
   final bool isBlocked;
   final bool isFollowing;
-  final String? followUri; // AT-URI of follow record
+  final String? followUri;
 
   const UserModel({
     required this.id,
@@ -47,7 +45,6 @@ class UserModel {
     this.followUri,
   });
 
-  // Aliases for Firebase & AT Protocol standard schema compliance
   String get uid => id;
   String get did => id;
   String get username => handle;
@@ -102,7 +99,6 @@ class UserModel {
     );
   }
 
-  /// Parses real Bluesky XRPC Profile JSON (profileViewDetailed or profileView)
   factory UserModel.fromAtproto(Map<String, dynamic> json) {
     final viewer = json['viewer'] as Map<String, dynamic>? ?? {};
     final isFollowing = viewer['following'] != null;
@@ -154,8 +150,8 @@ class UserModel {
       'bio': bio,
       'website': website,
       'location': location,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
       'emailVerified': emailVerified,
       'isPrivate': isPrivate,
       'followersCount': followersCount,
@@ -167,7 +163,6 @@ class UserModel {
 
   factory UserModel.fromMap(Map<String, dynamic> map, {String? docId}) {
     DateTime parseDate(dynamic date) {
-      if (date is Timestamp) return date.toDate();
       if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
       if (date is int) return DateTime.fromMillisecondsSinceEpoch(date);
       return DateTime.now();
@@ -199,10 +194,5 @@ class UserModel {
       isBlocked: map['isBlocked'] ?? false,
       isFollowing: map['isFollowing'] ?? false,
     );
-  }
-
-  factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    return UserModel.fromMap(data, docId: doc.id);
   }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:bluesky_app/app/routes/app_routes.dart';
 import 'package:bluesky_app/core/constants/app_colors.dart';
 import 'package:bluesky_app/core/widgets/aura_brand_mark.dart';
 import 'package:bluesky_app/core/widgets/aura_button.dart';
-import 'package:bluesky_app/core/widgets/aura_text_field.dart';
 import 'package:bluesky_app/features/authentication/controllers/auth_controller.dart';
 
 class LoginView extends GetView<AuthController> {
@@ -42,7 +42,7 @@ class LoginView extends GetView<AuthController> {
               ),
               const SizedBox(height: 8),
               Text(
-                "Welcome back! Enter your credentials to access your account.",
+                "Welcome back! Sign in with your Bluesky account.",
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark
@@ -51,36 +51,13 @@ class LoginView extends GetView<AuthController> {
                 ),
               ),
               const SizedBox(height: 32),
-              AuraTextField(
-                controller: controller.loginEmailController,
-                labelText: "Email or Handle",
-                hintText: "you@example.com",
-                keyboardType: TextInputType.emailAddress,
-                prefixIcon: const Icon(Icons.alternate_email, size: 20),
-              ),
-              const SizedBox(height: 20),
-              AuraTextField(
-                controller: controller.loginPasswordController,
-                labelText: "Password",
-                hintText: "••••••••",
-                isPassword: true,
-                prefixIcon: const Icon(Icons.lock_outline, size: 20),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Get.toNamed(AppRoutes.forgotPassword),
-                  child: const Text("Forgot password?"),
-                ),
-              ),
-              const SizedBox(height: 24),
               Obx(
                 () => AuraButton(
-                  text: "Sign In",
+                  text: "Continue with Bluesky",
                   width: double.infinity,
                   isLoading: controller.isLoading.value,
-                  onPressed: controller.login,
+                  icon: Icons.cloud_outlined,
+                  onPressed: controller.startOAuthLogin,
                 ),
               ),
               const SizedBox(height: 24),
@@ -88,7 +65,7 @@ class LoginView extends GetView<AuthController> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Don't have an account? ",
+                    "Learn more about ",
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark
@@ -97,9 +74,14 @@ class LoginView extends GetView<AuthController> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => Get.offNamed(AppRoutes.signup),
+                    onTap: () async {
+                      final uri = Uri.parse('https://atproto.com/');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
                     child: const Text(
-                      "Sign up",
+                      "AT Protocol",
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,

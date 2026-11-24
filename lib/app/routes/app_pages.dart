@@ -1,8 +1,4 @@
 import 'package:get/get.dart';
-import 'package:bluesky_app/features/authentication/bindings/auth_binding.dart';
-import 'package:bluesky_app/features/authentication/views/forgot_password_view.dart';
-import 'package:bluesky_app/features/authentication/views/login_view.dart';
-import 'package:bluesky_app/features/authentication/views/signup_view.dart';
 import 'package:bluesky_app/features/chat/views/chat_conversation_view.dart';
 import 'package:bluesky_app/features/composer/controllers/composer_controller.dart';
 import 'package:bluesky_app/features/composer/views/composer_view.dart';
@@ -12,6 +8,7 @@ import 'package:bluesky_app/features/followers/views/followers_view.dart';
 import 'package:bluesky_app/features/home/bindings/home_binding.dart';
 import 'package:bluesky_app/features/home/views/main_navigation_shell.dart';
 import 'package:bluesky_app/features/onboarding/views/onboarding_view.dart';
+import 'package:bluesky_app/features/post_details/controllers/post_details_controller.dart';
 import 'package:bluesky_app/features/post_details/views/post_details_view.dart';
 import 'package:bluesky_app/features/profile/controllers/profile_controller.dart';
 import 'package:bluesky_app/features/profile/views/edit_profile_view.dart';
@@ -35,21 +32,6 @@ class AppPages {
       binding: SplashBinding(),
     ),
     GetPage(name: AppRoutes.onboarding, page: () => const OnboardingView()),
-    GetPage(
-      name: AppRoutes.login,
-      page: () => const LoginView(),
-      binding: AuthBinding(),
-    ),
-    GetPage(
-      name: AppRoutes.signup,
-      page: () => const SignupView(),
-      binding: AuthBinding(),
-    ),
-    GetPage(
-      name: AppRoutes.forgotPassword,
-      page: () => const ForgotPasswordView(),
-      binding: AuthBinding(),
-    ),
     GetPage(
       name: AppRoutes.mainNav,
       page: () => const MainNavigationShell(),

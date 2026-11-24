@@ -1,44 +1,35 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bluesky_app/core/services/firebase_service.dart';
+import 'package:bluesky_app/core/network/atproto_api_service.dart';
 import 'package:bluesky_app/data/models/notification_model.dart';
 import 'package:bluesky_app/data/providers/mock_data_provider.dart';
 
 class NotificationRepository {
-  final FirebaseFirestore? _firestore = FirebaseService.isInitialized
-      ? FirebaseFirestore.instance
-      : null;
+  final AtprotoApiService _apiService;
+
+  NotificationRepository({AtprotoApiService? apiService})
+      : _apiService = apiService ?? AtprotoApiService();
 
   Stream<List<NotificationModel>> getNotificationsStream(String userId) {
-    if (_firestore != null) {
-      return _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('notifications')
-          .orderBy('createdAt', descending: true)
-          .snapshots()
-          .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => NotificationModel.fromFirestore(doc))
-                .toList(),
-          );
-    }
-    return Stream.value(MockDataProvider.sampleNotifications);
+    return Stream.periodic(const Duration(seconds: 30), (_) async {
+      try {
+        return await _apiService.listNotifications(limit: 50);
+      } catch (e) {
+        return MockDataProvider.sampleNotifications;
+      }
+    }).asyncMap((event) => event);
   }
 
   Future<void> markAllAsRead(String userId) async {
-    if (_firestore != null) {
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('notifications')
-          .where('isRead', isEqualTo: false)
-          .get();
+    try {
+      await _apiService.updateSeen(seenAt: DateTime.now());
+    } catch (e) {
+    }
+  }
 
-      final batch = _firestore.batch();
-      for (final doc in snapshot.docs) {
-        batch.update(doc.reference, {'isRead': true});
-      }
-      await batch.commit();
+  Future<int> getUnreadCount({bool seen = false}) async {
+    try {
+      return await _apiService.getUnreadCount(seen: seen);
+    } catch (e) {
+      return 0;
     }
   }
 }

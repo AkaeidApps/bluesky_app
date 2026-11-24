@@ -13,14 +13,6 @@ dependencies:
   # Navigation & State Management
   get: ^4.6.6
 
-  # Firebase Suite
-  firebase_core: ^3.12.1
-  firebase_auth: ^5.5.1
-  cloud_firestore: ^5.6.5
-  firebase_storage: ^12.4.4
-  firebase_messaging: ^15.2.4
-  firebase_app_check: ^0.3.2+4
-
   # UI & Design System
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.17
@@ -57,4 +49,3 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/branding/
-

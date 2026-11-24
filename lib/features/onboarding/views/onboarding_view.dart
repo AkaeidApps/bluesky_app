@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:bluesky_app/app/routes/app_routes.dart';
 import 'package:bluesky_app/core/constants/app_colors.dart';
 import 'package:bluesky_app/core/widgets/aura_brand_mark.dart';
 import 'package:bluesky_app/core/widgets/aura_button.dart';
+import 'package:bluesky_app/features/authentication/controllers/auth_controller.dart';
 
-class OnboardingView extends StatelessWidget {
+class OnboardingView extends GetView<AuthController> {
   const OnboardingView({super.key});
 
   @override
@@ -46,21 +48,30 @@ class OnboardingView extends StatelessWidget {
                 ),
               ),
               const Spacer(flex: 3),
-              AuraButton(
-                text: "Create a new account",
-                width: double.infinity,
-                onPressed: () => Get.toNamed(AppRoutes.signup),
+              Obx(
+                () => AuraButton(
+                  text: "Connect with Bluesky",
+                  width: double.infinity,
+                  isLoading: controller.isLoading.value,
+                  icon: Icons.cloud_outlined,
+                  onPressed: controller.startOAuthLogin,
+                ),
               ),
               const SizedBox(height: 14),
               AuraButton(
-                text: "Sign in",
+                text: "Learn about AT Protocol",
                 width: double.infinity,
                 variant: AuraButtonVariant.secondary,
-                onPressed: () => Get.toNamed(AppRoutes.login),
+                onPressed: () async {
+                  final uri = Uri.parse('https://atproto.com/');
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
               ),
               const SizedBox(height: 24),
               Text(
-                "By signing up, you agree to the Terms of Service and Privacy Policy.",
+                "By connecting, you agree to the Terms of Service and Privacy Policy.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,

@@ -26,22 +26,20 @@ class HomeController extends GetxController {
   }
 
   Future<void> _loadUser() async {
-    final firebaseUser = _authRepo.currentFirebaseUser;
-    if (firebaseUser != null) {
-      final user = await _userRepo.getUser(firebaseUser.uid);
-      currentUser.value = user ?? MockDataProvider.currentUser;
+    final hasSession = await _authRepo.hasValidSession();
+    if (hasSession) {
+      final user = await _authRepo.getCurrentUserProfile();
+      currentUser.value = user;
     } else {
       currentUser.value = MockDataProvider.currentUser;
     }
   }
 
   void _listenToBadges() {
-    // Listen to notification badges
     _notifRepo.getNotificationsStream('user_current').listen((notifs) {
       unreadNotificationsCount.value = notifs.where((n) => !n.isRead).length;
     });
 
-    // Listen to chat badges
     _chatRepo.getConversationsStream('user_current').listen((convs) {
       unreadMessagesCount.value = convs.fold(
         0,

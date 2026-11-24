@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class FeedModel {
   final String id;
   final String uri;
@@ -59,7 +57,6 @@ class FeedModel {
     );
   }
 
-  /// Parses real Bluesky Feed Generator (app.bsky.feed.defs#generatorView)
   factory FeedModel.fromAtproto(Map<String, dynamic> json) {
     final creator = json['creator'] as Map<String, dynamic>? ?? {};
     final viewer = json['viewer'] as Map<String, dynamic>? ?? {};
@@ -108,9 +105,4 @@ class FeedModel {
         isPinned: map['isPinned'] ?? false,
         queryTag: map['queryTag'] ?? 'all',
       );
-
-  factory FeedModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    return FeedModel.fromMap(data, docId: doc.id);
-  }
 }

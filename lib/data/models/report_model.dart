@@ -1,15 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class ReportModel {
   final String id;
   final String reporterId;
-  final String targetType; // 'post', 'user'
+  final String targetType;
   final String targetId;
-  final String
-  reason; // 'spam', 'harassment', 'hate_speech', 'misinformation', 'other'
+  final String reason;
   final String notes;
   final DateTime createdAt;
-  final String status; // 'pending', 'resolved', 'dismissed'
+  final String status;
 
   const ReportModel({
     required this.id,
@@ -29,14 +26,14 @@ class ReportModel {
     'targetId': targetId,
     'reason': reason,
     'notes': notes,
-    'createdAt': Timestamp.fromDate(createdAt),
+    'createdAt': createdAt.toIso8601String(),
     'status': status,
   };
 
   factory ReportModel.fromMap(Map<String, dynamic> map, {String? docId}) {
     DateTime parseDate(dynamic date) {
-      if (date is Timestamp) return date.toDate();
       if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+      if (date is int) return DateTime.fromMillisecondsSinceEpoch(date);
       return DateTime.now();
     }
 

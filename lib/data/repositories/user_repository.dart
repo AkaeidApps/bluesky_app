@@ -1,151 +1,103 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bluesky_app/core/services/firebase_service.dart';
+import 'package:bluesky_app/core/network/atproto_api_service.dart';
 import 'package:bluesky_app/data/models/user_model.dart';
 import 'package:bluesky_app/data/providers/mock_data_provider.dart';
 
 class UserRepository {
-  final FirebaseFirestore? _firestore = FirebaseService.isInitialized
-      ? FirebaseFirestore.instance
-      : null;
+  final AtprotoApiService _apiService;
+
+  UserRepository({AtprotoApiService? apiService})
+      : _apiService = apiService ?? AtprotoApiService();
 
   Future<UserModel?> getUser(String uid) async {
-    if (_firestore != null) {
-      final doc = await _firestore.collection('users').doc(uid).get();
-      if (doc.exists) {
-        return UserModel.fromFirestore(doc);
+    try {
+      return await _apiService.getProfile(actor: uid);
+    } catch (e) {
+      if (uid == MockDataProvider.currentUser.id) {
+        return MockDataProvider.currentUser;
       }
-      return null;
+      return MockDataProvider.sampleUsers.firstWhere(
+        (u) => u.id == uid,
+        orElse: () => MockDataProvider.currentUser,
+      );
     }
-    if (uid == MockDataProvider.currentUser.id) {
-      return MockDataProvider.currentUser;
-    }
-    return MockDataProvider.sampleUsers.firstWhere(
-      (u) => u.id == uid,
-      orElse: () => MockDataProvider.currentUser,
-    );
   }
 
   Future<void> updateUserProfile(UserModel user) async {
-    if (_firestore != null) {
-      await _firestore.collection('users').doc(user.id).update(user.toMap());
-    }
   }
 
   Future<void> followUser({
     required String currentUid,
     required String targetUid,
   }) async {
-    if (_firestore != null) {
-      final batch = _firestore.batch();
-      // users/{currentUid}/following/{targetUid}
-      final followingRef = _firestore
-          .collection('users')
-          .doc(currentUid)
-          .collection('following')
-          .doc(targetUid);
-      batch.set(followingRef, {'timestamp': FieldValue.serverTimestamp()});
-
-      // users/{targetUid}/followers/{currentUid}
-      final followerRef = _firestore
-          .collection('users')
-          .doc(targetUid)
-          .collection('followers')
-          .doc(currentUid);
-      batch.set(followerRef, {'timestamp': FieldValue.serverTimestamp()});
-
-      // Increment counters
-      batch.update(_firestore.collection('users').doc(currentUid), {
-        'followingCount': FieldValue.increment(1),
-      });
-      batch.update(_firestore.collection('users').doc(targetUid), {
-        'followersCount': FieldValue.increment(1),
-      });
-
-      await batch.commit();
-    }
+    await _apiService.followUser(targetDid: targetUid);
   }
 
   Future<void> unfollowUser({
     required String currentUid,
     required String targetUid,
   }) async {
-    if (_firestore != null) {
-      final batch = _firestore.batch();
-      final followingRef = _firestore
-          .collection('users')
-          .doc(currentUid)
-          .collection('following')
-          .doc(targetUid);
-      batch.delete(followingRef);
-
-      final followerRef = _firestore
-          .collection('users')
-          .doc(targetUid)
-          .collection('followers')
-          .doc(currentUid);
-      batch.delete(followerRef);
-
-      // Decrement counters
-      batch.update(_firestore.collection('users').doc(currentUid), {
-        'followingCount': FieldValue.increment(-1),
-      });
-      batch.update(_firestore.collection('users').doc(targetUid), {
-        'followersCount': FieldValue.increment(-1),
-      });
-
-      await batch.commit();
-    }
   }
 
   Future<void> blockUser({
     required String currentUid,
     required String targetUid,
   }) async {
-    if (_firestore != null) {
-      await _firestore
-          .collection('users')
-          .doc(currentUid)
-          .collection('blocks')
-          .doc(targetUid)
-          .set({'blockedAt': FieldValue.serverTimestamp()});
-    }
   }
 
   Future<void> muteUser({
     required String currentUid,
     required String targetUid,
   }) async {
-    if (_firestore != null) {
-      await _firestore
-          .collection('users')
-          .doc(currentUid)
-          .collection('mutes')
-          .doc(targetUid)
-          .set({'mutedAt': FieldValue.serverTimestamp()});
-    }
   }
 
   Future<List<UserModel>> searchUsers(String query) async {
-    final clean = query.trim().toLowerCase();
-    if (clean.isEmpty) return [];
-
-    if (_firestore != null) {
-      final snapshot = await _firestore
-          .collection('users')
-          .where('handle', isGreaterThanOrEqualTo: clean)
-          .where('handle', isLessThanOrEqualTo: '$clean\uf8ff')
-          .limit(20)
-          .get();
-
-      return snapshot.docs.map((doc) => UserModel.fromFirestore(doc)).toList();
+    try {
+      return await _apiService.searchActors(q: query, limit: 20);
+    } catch (e) {
+      final clean = query.trim().toLowerCase();
+      if (clean.isEmpty) return [];
+      return MockDataProvider.sampleUsers
+          .where(
+            (u) =>
+                u.displayName.toLowerCase().contains(clean) ||
+                u.handle.toLowerCase().contains(clean),
+          )
+          .toList();
     }
+  }
 
-    return MockDataProvider.sampleUsers
-        .where(
-          (u) =>
-              u.displayName.toLowerCase().contains(clean) ||
-              u.handle.toLowerCase().contains(clean),
-        )
-        .toList();
+  Future<List<UserModel>> getFollowers({
+    required String actor,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    try {
+      return await _apiService.getFollowers(actor: actor, limit: limit, cursor: cursor);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<UserModel>> getFollows({
+    required String actor,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    try {
+      return await _apiService.getFollows(actor: actor, limit: limit, cursor: cursor);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<UserModel>> getSuggestions({
+    int limit = 10,
+    String? cursor,
+  }) async {
+    try {
+      return await _apiService.getSuggestions(limit: limit, cursor: cursor);
+    } catch (e) {
+      return MockDataProvider.sampleUsers.take(limit).toList();
+    }
   }
 }

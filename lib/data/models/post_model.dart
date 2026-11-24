@@ -1,10 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bluesky_app/core/media/media_resolver.dart';
 
 enum ReplyPermission { everyone, following, mentioned, nobody }
 
 class PostFacet {
-  final String type; // 'mention', 'tag', 'link'
+  final String type;
   final String value;
   final int start;
   final int end;
@@ -61,10 +60,10 @@ class PostFacet {
 }
 
 class PostModel {
-  final String id; // Post AT-URI or Firestore ID
+  final String id;
   final String uri;
   final String cid;
-  final String authorId; // DID
+  final String authorId;
   final String authorDisplayName;
   final String authorHandle;
   final String? authorAvatarUrl;
@@ -79,9 +78,9 @@ class PostModel {
   final int repliesCount;
   final int quotesCount;
   final bool isLiked;
-  final String? likeUri; // Needed to delete like record
+  final String? likeUri;
   final bool isReposted;
-  final String? repostUri; // Needed to delete repost record
+  final String? repostUri;
   final bool isBookmarked;
   final String? replyToPostId;
   final String? replyToAuthorHandle;
@@ -187,9 +186,7 @@ class PostModel {
     );
   }
 
-  /// Parses official Bluesky AT Protocol XRPC JSON (feedViewPost or postView)
   factory PostModel.fromAtproto(Map<String, dynamic> json) {
-    // If wrapping feedViewPost, unpack 'post'
     final post = (json.containsKey('post') && json['post'] is Map)
         ? Map<String, dynamic>.from(json['post'])
         : json;
@@ -199,11 +196,9 @@ class PostModel {
     final viewer = post['viewer'] as Map<String, dynamic>? ?? {};
     final embed = post['embed'];
 
-    // Parse embeds
     final mediaItems = MediaResolver.parseEmbedImages(embed);
     final video = MediaResolver.parseVideo(embed);
 
-    // Extract quote post if embedded
     PostModel? quotePost;
     if (embed is Map && embed[r'$type'] == 'app.bsky.embed.record#view') {
       final rec = embed['record'];
@@ -212,17 +207,14 @@ class PostModel {
       }
     }
 
-    // Extract facets
     final rawFacets = record['facets'] as List<dynamic>? ?? [];
     final facets = rawFacets.map((f) => PostFacet.fromAtproto(Map<String, dynamic>.from(f))).toList();
 
-    // Parse created date
     final createdAtStr = record['createdAt'] ?? post['indexedAt'];
     final createdAt = createdAtStr != null
         ? DateTime.tryParse(createdAtStr) ?? DateTime.now()
         : DateTime.now();
 
-    // Parse viewer interaction state
     final isLiked = viewer['like'] != null;
     final likeUri = viewer['like'] as String?;
     final isReposted = viewer['repost'] != null;
@@ -274,7 +266,7 @@ class PostModel {
       'mediaUrls': mediaUrls,
       'mediaTypes': mediaTypes,
       'altTexts': altTexts,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
       'likesCount': likesCount,
       'repostsCount': repostsCount,
       'repliesCount': repliesCount,
@@ -291,7 +283,6 @@ class PostModel {
 
   factory PostModel.fromMap(Map<String, dynamic> map, {String? docId}) {
     DateTime parseDate(dynamic date) {
-      if (date is Timestamp) return date.toDate();
       if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
       if (date is int) return DateTime.fromMillisecondsSinceEpoch(date);
       return DateTime.now();
@@ -336,10 +327,5 @@ class PostModel {
       ),
       language: map['language'] ?? 'en',
     );
-  }
-
-  factory PostModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    return PostModel.fromMap(data, docId: doc.id);
   }
 }

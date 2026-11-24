@@ -4,15 +4,13 @@ import 'package:get/get.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/routes/app_pages.dart';
 import 'app/theme/app_theme.dart';
+import 'core/auth/secure_token_storage.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/cache_service.dart';
-import 'core/services/firebase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Core Services
-  await FirebaseService.initialize();
   await CacheService.init();
 
   runApp(const AuraApp());

@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 enum NotificationType {
   like,
   repost,
@@ -64,7 +62,6 @@ class NotificationModel {
     );
   }
 
-  /// Parses real Bluesky Notification View (app.bsky.notification.listNotifications)
   factory NotificationModel.fromAtproto(Map<String, dynamic> json) {
     final author = json['author'] as Map<String, dynamic>? ?? {};
     final reason = json['reason'] as String? ?? 'like';
@@ -129,15 +126,15 @@ class NotificationModel {
       'type': type.name,
       'postId': postId,
       'postSnippet': postSnippet,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
       'isRead': isRead,
     };
   }
 
   factory NotificationModel.fromMap(Map<String, dynamic> map, {String? docId}) {
     DateTime parseDate(dynamic date) {
-      if (date is Timestamp) return date.toDate();
       if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+      if (date is int) return DateTime.fromMillisecondsSinceEpoch(date);
       return DateTime.now();
     }
 
@@ -157,10 +154,5 @@ class NotificationModel {
       createdAt: parseDate(map['createdAt']),
       isRead: map['isRead'] ?? false,
     );
-  }
-
-  factory NotificationModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    return NotificationModel.fromMap(data, docId: doc.id);
   }
 }

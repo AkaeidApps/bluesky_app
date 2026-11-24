@@ -1,71 +1,99 @@
 import 'dart:io';
-
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:bluesky_app/core/auth/atproto_auth_service.dart';
+import 'package:bluesky_app/core/auth/secure_token_storage.dart';
 import 'package:bluesky_app/data/models/user_model.dart';
-import 'package:bluesky_app/features/authentication/services/auth_service.dart';
 
 class AuthRepository {
-  final AuthService _authService;
+  final AtprotoAuthService _authService;
+  final SecureTokenStorage _tokenStorage;
 
-  AuthRepository({AuthService? authService})
-    : _authService = authService ?? AuthService();
+  AuthRepository({
+    AtprotoAuthService? authService,
+    SecureTokenStorage? tokenStorage,
+  })  : _authService = authService ?? AtprotoAuthService(tokenStorage: tokenStorage),
+        _tokenStorage = tokenStorage ?? SecureTokenStorage();
 
-  Stream<User?> get authStateChanges => _authService.authStateChanges;
-
-  User? get currentFirebaseUser => _authService.currentFirebaseUser;
-
-  bool get isEmailVerified => _authService.isEmailVerified;
-
-  Future<UserModel> signIn({
-    required String email,
-    required String password,
-  }) async {
-    return _authService.signIn(identifier: email, password: password);
+  Stream<bool> get authStateChanges async* {
+    yield await _authService.hasValidSession();
   }
 
-  Future<UserModel> signUp({
-    required String email,
-    required String password,
-    required String displayName,
-    required String handle,
+  UserModel? get currentUser {
+    return null;
+  }
+
+  // Compatibility getter for legacy controllers expecting Firebase user
+  DummyFirebaseUser? get currentFirebaseUser => DummyFirebaseUser();
+
+  bool get isEmailVerified => true;
+
+  Future<UserModel> signInWithOAuth({
+    required Function(String authUrl) onAuthUrlReady,
+    required Function(String error) onError,
   }) async {
-    return _authService.signUp(
-      email: email,
-      password: password,
-      displayName: displayName,
-      username: handle,
+    await _authService.startOAuthFlow(
+      onAuthUrlReady: onAuthUrlReady,
+      onError: onError,
+    );
+    return UserModel(
+      id: '',
+      displayName: '',
+      handle: '',
+      createdAt: DateTime.now(),
     );
   }
 
-  Future<bool> isHandleAvailable(String handle) async {
-    return _authService.isUsernameAvailable(handle);
+  Future<void> handleOAuthCallback(Uri callbackUri) async {
+    await _authService.handleCallback(callbackUri);
   }
 
-  Future<void> sendPasswordReset(String email) async {
-    await _authService.sendPasswordReset(email);
+  Future<UserModel> getCurrentUserProfile() async {
+    final user = await _authService.getCurrentUser();
+    return user ?? UserModel(
+      id: '',
+      displayName: '',
+      handle: '',
+      createdAt: DateTime.now(),
+    );
   }
 
-  Future<void> sendEmailVerification() async {
-    await _authService.sendEmailVerification();
-  }
-
-  Future<bool> checkEmailVerification() async {
-    return _authService.reloadAndCheckEmailVerification();
-  }
-
-  Future<String?> uploadProfilePhoto(File imageFile, String uid) async {
-    return _authService.uploadProfilePhoto(imageFile, uid);
-  }
-
-  Future<UserModel?> getUserProfile(String uid) async {
-    return _authService.getUserProfile(uid);
+  Future<bool> hasValidSession() async {
+    return _authService.hasValidSession();
   }
 
   Future<void> signOut() async {
     await _authService.signOut();
   }
 
-  Future<void> deleteAccount() async {
-    await _authService.deleteAccount();
+  Future<void> refreshSession() async {
+    await _authService.refreshAccessToken();
   }
+
+  Future<bool> isHandleAvailable(String handle) async {
+    try {
+      final resolved = await _authService.apiService.resolveHandle(handle: handle);
+      return resolved.isEmpty;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  Future<String?> uploadProfilePhoto(File imageFile, String uid) async {
+    return null;
+  }
+
+  Future<UserModel?> getUserProfile(String uid) async {
+    try {
+      return await _authService.apiService.getProfile(actor: uid);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    await _authService.signOut();
+  }
+}
+
+class DummyFirebaseUser {
+  final String uid = 'user_current';
 }

@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'post_model.dart';
 
 class ReplyModel {
@@ -80,15 +78,15 @@ class ReplyModel {
     'authorIsVerified': authorIsVerified,
     'content': content,
     'mediaUrls': mediaUrls,
-    'createdAt': Timestamp.fromDate(createdAt),
+    'createdAt': createdAt.toIso8601String(),
     'likesCount': likesCount,
     'facets': facets.map((f) => f.toMap()).toList(),
   };
 
   factory ReplyModel.fromMap(Map<String, dynamic> map, {String? docId}) {
     DateTime parseDate(dynamic date) {
-      if (date is Timestamp) return date.toDate();
       if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+      if (date is int) return DateTime.fromMillisecondsSinceEpoch(date);
       return DateTime.now();
     }
 
@@ -112,10 +110,5 @@ class ReplyModel {
               .toList() ??
           [],
     );
-  }
-
-  factory ReplyModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
-    return ReplyModel.fromMap(data, docId: doc.id);
   }
 }
